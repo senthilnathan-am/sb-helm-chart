@@ -18,5 +18,19 @@ pipeline {
         }
       }
     }
+
+    stage('Chart Version Update') {
+        steps {
+            sh '''
+              aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+              chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | awk 'NR==1{print}')
+              app_version=`grep -i appversion Chart.yaml | awk '{print $2}' | tr -d '\"'`
+              if [ "$branch_name" = "stable" ]; then
+                old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
+                new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep -v "alpha" | grep -v "beta" | awk 'NR==1{print}')
+              fi
+            '''
+        }
+    }
   }
 }
