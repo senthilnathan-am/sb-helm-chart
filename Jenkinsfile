@@ -26,6 +26,7 @@ pipeline {
               default_chart_version=$(grep -A3 description Chart.yaml | grep version | awk '{print $2}')
               old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | awk 'NR==1{print}')
               old_app_version=`grep -i appversion Chart.yaml | awk '{print $2}' | tr -d '\"'`
+
               if [ "$branch_name" = "stable" ]; then
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
                 new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep -v "alpha" | grep -v "beta" | awk 'NR==1{print}')
@@ -75,15 +76,15 @@ pipeline {
                 helm push *.tgz oci://public.ecr.aws/p0g2c5k8
               fi
 
-              if [ "$branch_name" = "pre-stable" ]; then
+              if [ "$branch_name" = "development" ]; then
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
-                new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep "alpha" awk 'NR==1{print}')
+                new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep alpha | tr -d 'alpha"\"-' | awk 'NR==1{print}')
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
                 new_app_version=$(echo $new_core_image_tag | tr -d v)
                 sed -i "/appVersion/s/$old_app_version/$new_app_version/g" Chart.yaml
 
                 old_billing_image_tag=$(grep -A3 'sb-billing' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
-                new_billing_image_tag=$(aws ecr describe-images --repository-name stackbill-billing --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep "alpha" | awk 'NR==1{print}')
+                new_billing_image_tag=$(aws ecr describe-images --repository-name stackbill-billing --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep alpha | tr -d 'alpha"\"-' | awk 'NR==1{print}')
                 sed -i "/sb-billing/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
 
                 if [ "$release_type" = "Major" ]; then
@@ -124,15 +125,15 @@ pipeline {
                 helm push *.tgz oci://public.ecr.aws/p0g2c5k8
               fi
 
-              if [ "$branch_name" = "development" ]; then
+              if [ "$branch_name" = "pre-stable" ]; then
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
-                new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep "beta" awk 'NR==1{print}')
+                new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep beta | tr -d 'beta"\"-' | awk 'NR==1{print}')
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
                 new_app_version=$(echo $new_core_image_tag | tr -d v)
                 sed -i "/appVersion/s/$old_app_version/$new_app_version/g" Chart.yaml
 
                 old_billing_image_tag=$(grep -A3 'sb-billing' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
-                new_billing_image_tag=$(aws ecr describe-images --repository-name stackbill-billing --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep "beta" | awk 'NR==1{print}')
+                new_billing_image_tag=$(aws ecr describe-images --repository-name stackbill-billing --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep beta | tr -d 'beta"\"-' | awk 'NR==1{print}')
                 sed -i "/sb-billing/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
 
                 if [ "$release_type" = "Major" ]; then
