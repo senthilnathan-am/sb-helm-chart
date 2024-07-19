@@ -23,6 +23,7 @@ pipeline {
         steps {
             sh '''
               aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
+              default_chart_version=$(grep -A3 description Chart.yaml | grep version | awk '{print $2}')
               old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | awk 'NR==1{print}')
               old_app_version=`grep -i appversion Chart.yaml | awk '{print $2}' | tr -d '\"'`
               if [ "$branch_name" = "stable" ]; then
@@ -37,7 +38,7 @@ pipeline {
                   k=0
                   i=$(expr $i + 1)
                   new_chart_version=$i.$j.$k
-                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
                 elif [ "$release_type" = "Minor" ]; then
                   i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
                   j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
@@ -49,7 +50,7 @@ pipeline {
                     j=$(expr $j + 1)
                   fi
                   new_chart_version=$i.$j.$k
-                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
                 elif [ "$release_type" = "Patch" ]; then
                   i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
                   j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
@@ -60,7 +61,7 @@ pipeline {
                     k=$(expr $k + 1)
                   fi
                   new_chart_version=$i.$j.$k
-                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
                 fi
                 if [ -f *.tgz ]; then
                   `rm -f *.tgz`
