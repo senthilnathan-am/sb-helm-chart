@@ -93,7 +93,7 @@ pipeline {
                   k=0
                   i=$(expr $i + 1)
                   new_chart_version=$i.$j.$k
-                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version-alpha/}" Chart.yaml
                 elif [ "$release_type" = "Minor" ]; then
                   i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
                   j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
@@ -105,7 +105,7 @@ pipeline {
                     j=$(expr $j + 1)
                   fi
                   new_chart_version=$i.$j.$k
-                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version-alpha/}" Chart.yaml
                 elif [ "$release_type" = "Patch" ]; then
                   i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
                   j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
@@ -116,7 +116,7 @@ pipeline {
                     k=$(expr $k + 1)
                   fi
                   new_chart_version=$i.$j.$k
-                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version/}" Chart.yaml
+                  sed -i "/description/{n;n;n;s/$default_chart_version/$new_chart_version-alpha/}" Chart.yaml
                 fi
                 if [ -f *.tgz ]; then
                   `rm -f *.tgz`
