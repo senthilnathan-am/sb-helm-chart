@@ -11,10 +11,12 @@ pipeline {
 
   stages {
     stage('Git Clone') {
+      steps {
         script {
             git(url: 'https://git.assistanz.com/stackbill/sb-helm-charts.git', credentialsId: 'ebf87b99-0a18-4b01-a994-55c51a857e7b', branch: 'master')
             sh 'ls -al'
         }
+      }
     }
   }
 }
