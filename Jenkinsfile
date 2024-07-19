@@ -32,6 +32,11 @@ pipeline {
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
                 new_app_version=$(echo $new_core_image_tag | tr -d v)
                 sed -i "/appVersion/s/$old_app_version/$new_app_version/g" Chart.yaml
+
+                old_billing_image_tag=$(grep -A3 'sb-billing' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
+                new_billing_image_tag=$(aws ecr describe-images --repository-name stackbill-billing --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep -v "alpha" | grep -v "beta" | awk 'NR==1{print}')
+                sed -i "/sb-billing/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
+
                 if [ "$release_type" = "Major" ]; then
                   i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
                   j=0
