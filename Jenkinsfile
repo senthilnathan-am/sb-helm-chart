@@ -79,6 +79,9 @@ pipeline {
 
               if [ "$branch_name" = "development" ]; then
                 old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep alpha | awk 'NR==1{print}')
+                if [ -z "$old_chart_version" ]; then
+                  old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | awk 'NR==1{print}')
+                fi
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
                 new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep alpha | awk 'NR==1{print}')
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
@@ -129,6 +132,9 @@ pipeline {
 
               if [ "$branch_name" = "pre-stable" ]; then
                 old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep beta | awk 'NR==1{print}')
+                if [ -z "$old_chart_version" ]; then
+                  old_chart_version=$(aws ecr-public describe-images --region us-east-1 --repository-name stackbill --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | awk 'NR==1{print}')
+                fi
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
                 new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | tr -d 'v' | grep beta | awk 'NR==1{print}')
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
