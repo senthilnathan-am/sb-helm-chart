@@ -31,6 +31,42 @@ pipeline {
                 sed -i "/sb-core/{n;n;n;s/$old_core_image_tag/$new_core_image_tag/}" values.yaml
                 new_app_version=$(echo $new_core_image_tag | tr -d v)
                 sed -i "/appVersion/s/$old_app_version/$new_app_version/g" Chart.yaml
+                if [ "$release_type" = "Major" ]; then
+                  i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
+                  j=0
+                  k=0
+                  i=$(expr $i + 1)
+                  new_chart_version=$i.$j.$k
+                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                elif [ "$release_type" = "Minor" ]; then
+                  i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
+                  j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
+                  k=0
+                  if [ "$j" -gt 1000 ]; then
+                    j=0
+                    i=$(expr $i + 1)
+                  else
+                    j=$(expr $j + 1)
+                  fi
+                  new_chart_version=$i.$j.$k
+                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                elif [ "$release_type" = "Patch" ]; then
+                  i=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f1`
+                  j=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f2`
+                  k=`echo $old_chart_version | awk "{print $1}" | cut -d "." -f3`
+                  if [ "$k" -gt 20 ]; then
+                    exit;
+                  else
+                    k=$(expr $k + 1)
+                  fi
+                  new_chart_version=$i.$j.$k
+                  `sed -i "/version/s/$old_chart_version/$new_chart_version/g" Chart.yaml`
+                fi
+                if [ -f *.tgz ]; then
+                  `rm -f *.tgz`
+                fi
+                helm package .
+                helm push *.tgz oci://public.ecr.aws/p0g2c5k8
               fi
             '''
         }
