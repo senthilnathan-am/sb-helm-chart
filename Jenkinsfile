@@ -29,7 +29,7 @@ pipeline {
                 old_core_image_tag=$(grep -A3 'sb-core' values.yaml | grep tag | awk '{print $2}' | tr -d '"')
                 new_core_image_tag=$(aws ecr describe-images --repository-name stackbill-coreapi --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' --output text | sort -r | tr -d '["\"]"\","\""' | grep -v "alpha" | grep -v "beta" | awk 'NR==1{print}')
                 sed -i '/sb-core/{n;n;n;s/"${old_core_image_tag}"/"${new_core_image_tag}"/}' values.yaml
-                sed -i '/sb-core/{n;n;n;s/"v4.1.3"/"v4.1.8.3"/}' values.yaml
+                sed -i "/appVersion/s/$app_version/$new_core_image_tag/g" Chart.yaml
               fi
             '''
         }
